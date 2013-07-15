@@ -1,0 +1,39 @@
+#!/bin/sh
+
+bin=`basename "${0}"`
+
+#eval `envmgr -p PATH "/opt/rrdtool-1.4.8/bin"`
+
+rrdtool create "${HOME}/Sites/rrdtool/rrd/wino.rrd"       \
+        --start `perl -e 'print time();'`                 \
+        --step 60                                         \
+        DS:humidity:GAUGE:120:0.0:100.0                   \
+        DS:temp_f:GAUGE:120:50.0:100.0                    \
+        DS:photocell:GAUGE:120:0:1024                     \
+        DS:infrared:GAUGE:120:0:1024                      \
+        DS:millis:DERIVE:120:0:1024                       \
+        DS:d_humidity:DERIVE:120:0.0:100.0                \
+        DS:d_temp_f:DERIVE:120:50.0:100.0                 \
+        DS:d_photocell:DERIVE:120:0:1024                  \
+        DS:d_infrared:DERIVE:120:0:1024                   \
+        DS:d_millis:DERIVE:120:0:1024                     \
+        RRA:AVERAGE:0.5:5:12                              \
+        RRA:AVERAGE:0.5:60:24                             \
+        RRA:AVERAGE:0.5:1440:7                            \
+        RRA:AVERAGE:0.5:1440:30                           \
+        RRA:AVERAGE:0.5:1440:365                          \
+        RRA:LAST:0.5:5:12                                 \
+        RRA:LAST:0.5:60:24                                \
+        RRA:LAST:0.5:1440:7                               \
+        RRA:LAST:0.5:1440:30                              \
+        RRA:LAST:0.5:1440:365                             \
+        RRA:MAX:0.5:5:12                                  \
+        RRA:MAX:0.5:60:24                                 \
+        RRA:MAX:0.5:1440:7                                \
+        RRA:MAX:0.5:1440:30                               \
+        RRA:MAX:0.5:1440:365                              \
+        RRA:MIN:0.5:5:12                                  \
+        RRA:MIN:0.5:60:24                                 \
+        RRA:MIN:0.5:1440:7                                \
+        RRA:MIN:0.5:1440:30                               \
+        RRA:MIN:0.5:1440:365

@@ -1,0 +1,61 @@
+#
+# kjolley
+# Fri Jul  5 04:38:01 PDT 2013
+#
+CREATE DATABASE IF NOT EXISTS sensormatic;
+USE sensormatic;
+CREATE TABLE IF NOT EXISTS wino (
+  humidity               FLOAT,
+  temperature_celsius    FLOAT,
+  temperature_fahrenheit FLOAT,
+  photocell              SMALLINT,
+  infrared               SMALLINT,
+  milliseconds_before    BIGINT,
+  milliseconds_after     BIGINT,
+  milliseconds_now       BIGINT,
+  temp_c_A               FLOAT,
+  temp_c_B               FLOAT,
+  humidity_A             FLOAT,
+  humidity_B             FLOAT,
+  thetime                TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (thetime)
+);
+#CREATE USER 'sensormatic'@'localhost' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON sensormatic.* TO 'sensormatic'@'localhost';
+
+
+#$ref->{current_observation}->{local_epoch} => 1373373621
+#$ref->{current_observation}->{precip_1hr_in} => 0.00
+#$ref->{current_observation}->{precip_today_in} => -999.00
+#$ref->{current_observation}->{pressure_in} => 29.93
+#$ref->{current_observation}->{relative_humidity} => 90%
+#$ref->{current_observation}->{temp_f} => 64
+#$ref->{current_observation}->{visibility_mi} => 6.0
+#$ref->{current_observation}->{weather} => Mostly Cloudy
+#$ref->{current_observation}->{wind_degrees} => 0
+#$ref->{current_observation}->{wind_dir} => North
+#$ref->{current_observation}->{wind_gust_mph} => 0
+#$ref->{current_observation}->{wind_mph} => 0
+
+# lawsonvalley is the local weather station 
+CREATE DATABASE IF NOT EXISTS weathermatic;
+USE weathermatic;
+CREATE TABLE IF NOT EXISTS lawsonvalley (
+  local_epoch       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  precip_1hr_in     FLOAT,
+  precip_today_in   FLOAT,
+  pressure_in       FLOAT,
+  relative_humidity FLOAT,
+  temp_f            FLOAT,
+  visibility_mi     FLOAT,
+  weather           VARCHAR(64),
+  wind_degrees      FLOAT,
+  wind_dir          VARCHAR(24),
+  wind_gust_mph     FLOAT,
+  wind_mph          FLOAT,
+  station_id        VARCHAR(24),
+  PRIMARY KEY (local_epoch)
+);
+#CREATE USER 'weathermatic'@'localhost' IDENTIFIED BY 'password';
+GRANT ALL ON weathermatic.* TO 'weathermatic'@'localhost';
+FLUSH PRIVILEGES;

@@ -1,0 +1,90 @@
+#!/bin/sh
+
+bin=`basename "${0}"`
+eval `/usr/local/bin/envmgr PATH /usr/local/bin`
+
+secondsperloop=60
+
+#eval `envmgr -p PATH "/opt/rrdtool-1.4.8/bin"`
+
+tmpdinfrared=`mktemp -d "/tmp/${bin}.XXXXXXX"` || exit 1
+json="${tmpdinfrared}/wino-192.168.1.132.json"
+wino='http://192.168.1.132/json'
+rrd="${HOME}/Sites/rrdtool/rrd/wino.rrd"
+tmp="${tmpdinfrared}/wino-192.168.1.132.tmp"
+
+verbose="FALSE"
+output="/tmp/${bin}.out.$$"
+
+trap '[ -d "${tmp}" ] && rm -rf "${tmp}"' 0 1 2 15
+
+echo "${bin}: `date`: start" > "${output}"
+#while true
+#do
+  [ -f "${json}" ] && rm "${json}"
+  wget --quiet -O - "${wino}"                   \
+  | sed -e 's/.$//' -e 's/[,"]//g' -e '/:/!d'   \
+  > "${json}"
+
+  [ ${verbose} = "TRUE" ] && echo "${bin}: `date`: top of loop: JSON:" >> "${output}"
+  [ ${verbose} = "TRUE" ] && cat "${json}" >> "${output}"
+
+  humidity=`awk  '$1=="humidity_%:"{print $2}' "${json}"`
+  temperature_celsius=`awk  '$1=="temperature_celsius:"{print $2}' "${json}"`
+  temperature_fahrenheit=`awk  '$1=="temperature_fahrenheit:"{print $2}' "${json}"`
+  photocell=`awk  '$1=="photocell:"{print $2}' "${json}"`
+  infrared=`awk  '$1=="infrared:"{print $2}' "${json}"`
+  milliseconds_now=`awk '$1=="milliseconds_now:"{print $2}' "${json}"`
+  milliseconds_before=`awk '$1=="milliseconds_before:"{print $2}' "${json}"`
+  milliseconds_after=`awk '$1=="milliseconds_after:"{print $2}' "${json}"`
+  humidity_A=`awk '$1=="humidity_A:"{print $2}' "${json}"`
+  humidity_B=`awk '$1=="humidity_B:"{print $2}' "${json}"`
+  temp_c_A=`awk '$1=="temp_c_A:"{print $2}' "${json}"`
+  temp_c_B=`awk '$1=="temp_c_B:"{print $2}' "${json}"`
+#  GAUGE="${hu}:${temperature_fahrenheit}:${photocell}:${infrared}:${milliseconds_now}:${milliseconds_before}:${milliseconds_after}"
+#  DERIVE=`echo "${GAUGE}" | awk -F: -v OFS=: '{for (i=1;i<=NF;i++){$i=int($i+0.5)}print}'` # yes, i'm aware i didn't need the +0.5...
+#  rrdtool update "${rrd}" "N:${GAUGE}:${DERIVE}"
+  [ ${verbose} = "TRUE" ] && echo "${bin}: `date`: rrdtool update ${rrd} N:${GAUGE}:${DERIVE}" >> "${output}"
+
+  (mysql --user='sensormatic' --password='password' 2>&1 <<EOF1) | grep -v '^Warning: Using a password on the command line interface can be insecure.$'
+  use sensormatic;
+  insert into wino (
+    humidity,
+    temperature_celsius,
+    temperature_fahrenheit,
+    photocell,
+    infrared,
+    milliseconds_now,
+    milliseconds_before,
+    milliseconds_after,
+    humidity_A,
+    humidity_B,
+    temp_c_A,
+    temp_c_B,
+    thetime
+  ) values (
+    $humidity,
+    $temperature_celsius,
+    $temperature_fahrenheit,
+    $photocell,
+    $infrared,
+    $milliseconds_now,
+    $milliseconds_before,
+    $milliseconds_after,
+    $humidity_A,
+    $humidity_B,
+    $temp_c_A,
+    $temp_c_B,
+    NOW()
+  )
+EOF1
+
+#mysql --user='sensormatic' --password='SenSei' sensormatic -e 'select * from wino order by thetime desc limit 5;'
+
+#echo $?
+true
+exit 0
+
+#  perl -e "sleep ${secondsperloop} - time % ${secondsperloop}"
+#  [ ${verbose} = "TRUE" ] && echo "${bin}: `date`:" >> "${output}"
+#done
